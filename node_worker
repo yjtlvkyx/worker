@@ -1,0 +1,48 @@
+const path = require('path');
+const fs = require('fs');
+//0点清空数据
+const timer = function (fileUrl) {
+    setInterval(() => {
+        let data = new Date();
+        let hours = date.getHours();
+        let second = date.getMinutes();
+        let millon = date.getSeconds();
+        if (hours === 0 && second === 0 && millon === 0) {
+            fs.writeFileSync(fileUrl, JSON.stringify());
+        }
+    }, 1000)
+}
+
+module.exports = function(config) {
+    return async (ctx, next) => {
+        await new Promise((resolve, reject) => {
+            //需要缓存的路径
+            const { urls } = config;
+            let urlTarget = urls && urls.length && urls.findIndex(ele => ele === ctx.url) !== -1;
+            //数据集合路径
+            let fileUrl = path.join(process.cwd(), 'cache-list');
+            if (!this.timer) {
+                this.timer = timer(fileUrl);
+            }
+            if (urlTarget) {
+                let file = fs.existsSync(fileUrl);
+                let data = {};
+                if (file) {
+                    //有文件则读取数据
+                    data = JSON.parse(fs.readFileSync(fileUrl)).toString();
+                }
+                //有数据则输出
+                if (data[ctx.url]) {
+                    data = data[ctx.url]
+                    ctx.body = data;
+                    resolve();
+                } else {
+                    next();
+                    data[ctx.url] = ctx.body;
+                    fs.writeFileSync(fileUrl, JSON.stringify(data));
+                    resolve();
+                }
+            }
+        })
+    }
+}
